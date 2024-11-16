@@ -23,7 +23,7 @@ class Day2
     return (numBalls, color);
   }
 
-  public static int parseLine(string line)
+  public static long parseLine(string line)
   {
     string gameRegexPat = @"Game\s+(\d+)\s*:";
     string colrosRegexPat = @"(\d+)\s+(red|green|blue)";
@@ -51,13 +51,14 @@ class Day2
           maxBallCounts[i] = color.count;
       }
     }
-    if (maxBallCounts[0] > 12 || maxBallCounts[1] > 13 || maxBallCounts[2] > 14)
-      return 0;
-    else return gameId;
+    long power = maxBallCounts[0] * maxBallCounts[1] * maxBallCounts[2];
+    return power;
   }
+
+
   public static void Main(string[] argsv)
   {
-    int result = 0;
+    long result = 0;
     string[] lines = Day1.readFromFile("./input.txt");
     Console.WriteLine($"{lines.Length} lines read from input.txt");
     foreach (string line in lines)
