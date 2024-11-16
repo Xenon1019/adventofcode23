@@ -51,7 +51,6 @@ public class Day1
     int firstDigit, secondDigit;
     firstDigit = getDigitFromMatch(match, false);
     secondDigit = getDigitFromMatch(revMatch, true);
-    /*Console.WriteLine($"{line} -> {firstDigit}{secondDigit}");*/
     return 10 * firstDigit + secondDigit;
   }
 
