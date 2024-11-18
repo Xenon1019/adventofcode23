@@ -17,18 +17,25 @@ public class Day4
       if (lotteryNumbers.Contains(int.Parse(yourNumberCapture.ToString())))
         count++;
     }
-    return (count == 0) ? 0 : (1 << (count - 1));
+    return count;
   }
 
 
   public static void Main(string[] args)
   {
     string[] lines = Utility.GetLinesFromFile("./input.txt");
-    int answer = 0;
-    foreach (string line in lines)
+    int numberOfCards = lines.Length;
+    int[] cardsCount = new int[numberOfCards];
+    Array.Fill(cardsCount, 1);
+
+    for (int i = 0; i < lines.Length; i++)
     {
-      answer += parse(line);
+      int copyCount = parse(lines[i]);
+      for (int j = i + 1; j < i + 1 + copyCount && j < lines.Length; j++)
+      {
+        cardsCount[j] += cardsCount[i];
+      }
     }
-    Console.WriteLine(answer);
+    Console.WriteLine(cardsCount.Sum());
   }
 }
