@@ -12,7 +12,7 @@ using System.Collections;
 
 public class Day5
 {
-  public static List<long> seeds = new List<long>();
+  public static List<Range> seeds = new List<Range>();
   public static List<Range> seedToSoil = new List<Range>();
   public static List<Range> soilToFertiliser = new List<Range>();
   public static List<Range> fertiliserToWater = new List<Range>();
@@ -99,9 +99,10 @@ public class Day5
         lastCategory = tokens[0];
         if (lastCategory == "seeds")
         {
-          for (int j = 1; j < tokens.Length; j++)
+          for (int j = 1; j < tokens.Length; j += 2)
           {
-            seeds.Add(long.Parse(tokens[j]));
+            long min = long.Parse(tokens[j]), size = long.Parse(tokens[j + 1]);
+            seeds.Add(new Range(min, size + min - 1, 1));
           }
         }
       }
@@ -178,9 +179,12 @@ public class Day5
     humidityToLocation.Sort();
 
     long minLocation = long.MaxValue;
-    foreach (long seed in seeds)
+    int count = 1;
+    foreach (Range seedRange in seeds)
     {
-      minLocation = long.Min(minLocation, map(seed));
+      for (long seed = seedRange.Min; seed < seedRange.Max; seed++)
+        minLocation = long.Min(minLocation, map(seed));
+      Console.WriteLine($"Seed Chunk {count++}/{seeds.Count} done.");
     }
     Console.WriteLine(minLocation);
   }
