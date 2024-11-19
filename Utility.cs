@@ -9,10 +9,11 @@ public class Utility
     {
       line = reader.ReadLine();
       if (line == String.Empty)
-        throw new Exception("Empty line found in input.");
+        continue;
       if (line == null) break;
       lines.Add(line);
     };
+    reader.Close();
     if (lines.Count == 0)
       throw new Exception("Input file is empty.");
     return lines.ToArray();
