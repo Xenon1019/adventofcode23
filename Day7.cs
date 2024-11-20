@@ -11,7 +11,7 @@ public class Day7
     FiveOfKind = 6
   }
 
-  public static char[] Cards = { '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A' };
+  public static char[] Cards = { 'J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A' };
 
   public static HandType getHandType(string hand)
   {
@@ -24,6 +24,12 @@ public class Day7
         index++;
       counts[index]++;
     }
+    int maxIndex = 1;
+    for (int i = 1; i < counts.Length; i++)
+      if (counts[maxIndex] < counts[i])
+        maxIndex = i;
+    counts[maxIndex] += counts[0];
+    counts[0] = 0;
     counts = counts.Where(count => count > 0).ToArray();
     Array.Sort(counts);
     hand = counts.Aggregate("", (aggregate, elem) => elem.ToString() + aggregate);
