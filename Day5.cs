@@ -1,6 +1,6 @@
 //
 //
-//       ****** I know this code is messy, ubly and horrible.********
+//       ****** I know this code is messy, ugly and horrible.********
 //       ****** I could use a lot more adjectives to describe it.*********
 //       ****** But currently this is the best I can do. *********
 //       ****** May revisit this at some time!!**************
@@ -21,30 +21,21 @@ public class Day5
   public static List<Range> tempratureToHumidity = new List<Range>();
   public static List<Range> humidityToLocation = new List<Range>();
 
-  public static IList getList(string token)
+  public static List<Range>[] maps = { seedToSoil, soilToFertiliser, fertiliserToWater,
+                                       waterToLight, lightToTemprature, tempratureToHumidity,
+                                       humidityToLocation };
+
+  public static int getMapIndex(string token)
   {
-    switch (token)
-    {
-      case "seeds":
-        return seeds;
-      case "seed-to-soil":
-        return seedToSoil;
-      case "soil-to-fertilizer":
-        return soilToFertiliser;
-      case "fertilizer-to-water":
-        return fertiliserToWater;
-      case "water-to-light":
-        return waterToLight;
-      case "light-to-temperature":
-        return lightToTemprature;
-      case "temperature-to-humidity":
-        return tempratureToHumidity;
-      case "humidity-to-location":
-        return humidityToLocation;
-      default:
-        throw new ArgumentException($"{token} not recognized");
-    }
+    string[] mapNames = {"seed-to-soil", "soil-to-fertilizer", "fertilizer-to-water",
+                         "water-to-light", "light-to-temperature", "temperature-to-humidity",
+                         "humidity-to-location"};
+    for (int index = 0; index < mapNames.Length; index++)
+      if (token == mapNames[index])
+        return index;
+    throw new Exception($"Invalid map token {token}");
   }
+
   public class Range : IComparable
   {
     public long Min { get; }
@@ -63,27 +54,20 @@ public class Day5
     public long Map(long number)
     {
       if (number < Min || number > Max)
-        throw new Exception($"You are trying to mapo {number} that is outside the range ({Min},{Max})");
+        throw new Exception($"You are trying to map {number} that is outside the range ({Min},{Max})");
       return MapTo + number - Min;
     }
 
     public int CompareTo(object? val)
     {
-      if (val is long)
-      {
-        long number = (long)val;
-        if (number < Min) return 1;
-        else if (number > Max) return -1;
-        else return 0;
-      }
-      else if (val is Range)
+      if (val is Range)
       {
         Range range = (Range)val;
         if (Max < range.Min) return -1;
         else if (Min > range.Max) return 1;
         else return 0;
       }
-      throw new ArgumentException("Value is not of type long or Range");
+      throw new ArgumentException("Value is not of type or Range");
     }
   }
 
@@ -95,9 +79,10 @@ public class Day5
       string line = lines[i];
       if (line.Contains(':'))
       {
-        string[] tokens = line.Split(new char[] { ':', ' ' }, StringSplitOptions.RemoveEmptyEntries);
+        string[] tokens = line.Split(new char[] { ':', ' ' },
+                            StringSplitOptions.RemoveEmptyEntries);
         lastCategory = tokens[0];
-        if (lastCategory == "seeds")
+        if (lastCategory != "seeds") continue;
         {
           for (int j = 1; j < tokens.Length; j += 2)
           {
@@ -108,7 +93,7 @@ public class Day5
       }
       else
       {
-        List<Range> list = getList(lastCategory) as List<Range>;
+        List<Range> list = maps[getMapIndex(lastCategory)];
         string[] numbers = line.Split(' ', StringSplitOptions.RemoveEmptyEntries);
         if (numbers.Length != 3)
           throw new Exception($"Invalid input line : {line}");
@@ -121,43 +106,25 @@ public class Day5
     }
   }
 
-  public static long map(long seed)
+  public static (long result, long consumed) recursiveMap(long seedStart, int mapIndex)
   {
-    int result = seedToSoil.BinarySearch(new Range(seed, seed, 1));
-    long soil;
-    if (result < 0)
-      soil = seed;
-    else
-      soil = seedToSoil[result].Map(seed);
-    result = soilToFertiliser.BinarySearch(new Range(soil, soil, 1));
-    long fertiliser;
-    if (result < 0)
-      fertiliser = soil;
-    else fertiliser = soilToFertiliser[result].Map(soil);
-    result = fertiliserToWater.BinarySearch(new Range(fertiliser, fertiliser, 1));
-    long water;
-    if (result < 0)
-      water = fertiliser;
-    else water = fertiliserToWater[result].Map(fertiliser);
-    result = waterToLight.BinarySearch(new Range(water, water, 1));
-    long light;
-    if (result < 0)
-      light = water;
-    else light = waterToLight[result].Map(water);
-    result = lightToTemprature.BinarySearch(new Range(light, light, 1));
-    long temp;
-    if (result < 0)
-      temp = light;
-    else temp = lightToTemprature[result].Map(light);
-    result = tempratureToHumidity.BinarySearch(new Range(temp, temp, 1));
-    long humidity;
-    if (result < 0)
-      humidity = temp;
-    else humidity = tempratureToHumidity[result].Map(temp);
-    result = humidityToLocation.BinarySearch(new Range(humidity, humidity, 1));
-    if (result < 0)
-      return humidity;
-    else return humidityToLocation[result].Map(humidity);
+    if (mapIndex == maps.Length)
+      return (result: seedStart, consumed: long.MaxValue);
+    List<Range> map = maps[mapIndex];
+    int search = map.BinarySearch(new Range(seedStart, seedStart, 1));
+    long mapResult, consumedResult;
+    if (search < 0)
+    {
+      search = ~search;
+      (mapResult, consumedResult) = recursiveMap(seedStart, mapIndex + 1);
+      if (search == map.Count)
+        return (result: mapResult, consumed: consumedResult);
+      else
+        return (result: mapResult, consumed: long.Min(consumedResult, map[search].Min - seedStart));
+    }
+    long tempMapRes = map[search].Map(seedStart);
+    (mapResult, consumedResult) = recursiveMap(tempMapRes, mapIndex + 1);
+    return (result: mapResult, consumed: long.Min(consumedResult, map[search].Max - seedStart + 1));
   }
 
   public static void Main()
@@ -170,20 +137,22 @@ public class Day5
         Console.Write(obj.ToString() + ' ');
       Console.Write('\n');
     };
-    seedToSoil.Sort();
-    soilToFertiliser.Sort();
-    fertiliserToWater.Sort();
-    waterToLight.Sort();
-    lightToTemprature.Sort();
-    tempratureToHumidity.Sort();
-    humidityToLocation.Sort();
+    foreach (List<Range> ranges in maps)
+      ranges.Sort();
 
     long minLocation = long.MaxValue;
     int count = 1;
     foreach (Range seedRange in seeds)
     {
-      for (long seed = seedRange.Min; seed < seedRange.Max; seed++)
-        minLocation = long.Min(minLocation, map(seed));
+      long seed = seedRange.Min;
+      while (seed < seedRange.Max)
+      {
+        (long result, long consumed) = recursiveMap(seed, 0);
+        if (consumed == 0)
+          throw new Exception($"Something went wrong {consumed} consumed for seed {seed}.");
+        seed += consumed;
+        minLocation = long.Min(minLocation, result);
+      }
       Console.WriteLine($"Seed Chunk {count++}/{seeds.Count} done.");
     }
     Console.WriteLine(minLocation);
